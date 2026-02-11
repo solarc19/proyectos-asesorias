@@ -1,39 +1,53 @@
 # proyectos-asesorias
 
-Solución pragmática para consultar seguidores/seguidos de Instagram con `instaloader` sin romperte por rate limit en cada ejecución.
+Enfoque **pragmático y simple** para saber quién no te sigue de vuelta en Instagram, evitando depender siempre de requests que Instagram bloquea (`401`, `Please wait a few minutes`).
 
-## Idea simple (estilo Linux dev)
+## TL;DR (recomendado)
 
-- Reusar sesión local siempre que se pueda.
-- Hacer pocos reintentos con espera incremental cuando aparezca `Please wait a few minutes`.
-- Guardar un snapshot local (`JSON`) para fallback cuando Instagram limita temporalmente.
-
-## Requisitos
+Usá modo **offline** con export oficial de Instagram (sin scraping live, sin rate limit):
 
 ```bash
-python -m pip install instaloader
+python main.py offline \
+  --followers-file /ruta/followers_1.json \
+  --following-file /ruta/following.json \
+  --target tu_usuario
 ```
 
-## Uso
+## Modos disponibles
+
+### 1) `offline` (recomendado)
+
+- Lee JSON exportados por Instagram.
+- No hace consultas GraphQL en vivo.
+- Cero dependencia de bloqueos temporales por rate limit.
+
+### 2) `api` (opcional)
+
+- Usa `instaloader` con sesión local.
+- Tiene backoff + fallback a snapshot local.
+- Puede volver a fallar si Instagram insiste con bloqueos.
 
 ```bash
-python main.py --username TU_USUARIO --target CUENTA_OBJETIVO
+python main.py api --username TU_USUARIO --target TU_USUARIO
 ```
 
-Opciones útiles:
+## Cómo obtener los JSON para `offline`
 
-- `--retries 3`: reintentos ante rate limit.
-- `--base-wait 45`: espera base en segundos (se multiplica por intento).
-- `--snapshot-dir data`: carpeta de snapshot local.
+1. Instagram → **Configuración** → **Tu información y permisos** (o Centro de cuentas) → **Descargar tu información**.
+2. Pedí formato **JSON**.
+3. Cuando te llegue el ZIP, buscá archivos tipo:
+   - `followers_1.json`
+   - `following.json`
+4. Ejecutá el comando `offline` con esas rutas.
 
-## Qué resuelve de tu error 401
+## Nota sobre "F11/F12"
 
-Cuando Instagram responde:
+Si antes usabas una web/app donde tenías que tocar teclas del navegador en Instagram, eso suele ser un workaround frágil. Este repo ahora prioriza el flujo estable: **export JSON + análisis local**.
 
-- `401 Unauthorized`
-- `Please wait a few minutes before you try again`
+## Salida
 
-el script:
-1. espera y reintenta,
-2. y si no alcanza, usa el último snapshot local (si existe),
-3. para que puedas seguir trabajando sin cortar el flujo.
+El script imprime:
+- cantidad de followers,
+- cantidad de followees,
+- lista de cuentas que no te siguen de vuelta,
+- y guarda snapshot en `data/`.
